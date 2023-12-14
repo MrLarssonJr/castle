@@ -1,0 +1,66 @@
+name: Docker Image CI
+
+on:
+  push:
+    branches: [ "master" ]
+
+jobs:
+  build:
+    outputs:
+      tag: ${{ steps.meta.outputs.tags }}
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Docker Metadata action
+      id: meta
+      uses: docker/metadata-action@v5.0.0
+      with:
+        images: |
+          ghcr.io/mrlarssonjr/waypointer
+        tags: |
+          type=sha
+        github-token: ${{ github.token }}
+
+
+    - name: Docker Setup Buildx
+      uses: docker/setup-buildx-action@v3.0.0
+
+    - name: Docker Login
+      uses: docker/login-action@v3.0.0
+      with:
+        registry: ghcr.io
+        username: ${{github.actor}}
+        password: ${{github.token}}
+
+    - name: Build and push Docker images
+      uses: docker/build-push-action@v5.1.0
+      with:
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+        context: .
+        push: true
+        github-token: ${{ github.token }}
+        tags: ${{ steps.meta.outputs.tags }}
+        labels: ${{ steps.meta.outputs.labels }}
+
+  deploy:
+    runs-on: ubuntu-latest
+    environment: home-server
+    needs: build
+    steps:
+      - uses: actions/checkout@v3
+      - name: Add identity
+        env:
+          SSH: ${{ secrets.SSH }}
+          HOST_FINGER_PRINT: $${{ vars.HOST_FINGER_PRINT }}
+        run: |
+          install -m 600 -D /dev/null ~/.ssh/id_rsa
+          echo "${SSH}" > ~/.ssh/id_rsa
+          echo "${HOST_FINGER_PRINT}" >> ~/.ssh/known_hosts
+      - name: Create compose.yaml
+        env:
+          IMAGE: ${{ needs.build.outputs.tag }}
+        run: docker compose -f deployment/base.yaml -f deployment/prod.yaml config | grep -v "name:" > compose.yaml
+      - name: ssh
+        run: cat compose.yaml | ssh github@jesper.larsson.family "docker stack deploy --compose-file - waypointer"
