@@ -59,8 +59,9 @@ jobs:
           echo "${SSH}" > ~/.ssh/id_rsa
           echo "${HOST_FINGER_PRINT}" >> ~/.ssh/known_hosts
       - name: Create compose.yaml
+        uses: mikefarah/yq@master
         env:
           IMAGE: ${{ needs.build.outputs.tag }}
-        run: docker compose -f stacks/minecraft/compose.yaml config | grep -v "name:" > compose.yaml
+        run: docker compose -f stacks/minecraft/compose.yaml config | yq 'del(.name) | with(.services[].ports[]; .published = (.published | to_number) )' > compose.yaml
       - name: ssh
         run: cat compose.yaml | ssh github@jesper.larsson.family "docker stack deploy --compose-file - waypointer"
