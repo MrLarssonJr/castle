@@ -71,4 +71,4 @@ jobs:
       - name: debug fixed_compose.yaml
         run: cat fixed_compose.yaml
       - name: ssh
-        run: cat fixed_compose.yaml | ssh github@jesper.larsson.family "docker stack deploy --compose-file - waypointer"
+        run: cat fixed_compose.yaml | ssh github@jesper.larsson.family "docker stack deploy --compose-file - minecraft"
