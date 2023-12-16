@@ -62,13 +62,9 @@ jobs:
         env:
           IMAGE: ${{ needs.build.outputs.tag }}
         run: docker compose -f stacks/minecraft/compose.yaml config > compose.yaml
-      - name: debug compose.yaml
-        run: cat compose.yaml
       - name: Touch up compose.yaml
         uses: mikefarah/yq@master
         with:
           cmd: cat compose.yaml | yq 'del(.name) | with(.services[].ports[]; .published = (.published | to_number) )' > fixed_compose.yaml
-      - name: debug fixed_compose.yaml
-        run: cat fixed_compose.yaml
       - name: ssh
         run: cat fixed_compose.yaml | ssh github@jesper.larsson.family "docker stack deploy --compose-file - minecraft"
