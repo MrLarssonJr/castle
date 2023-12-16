@@ -3,7 +3,7 @@ version: "3.0"
 services:
   minecraft:
     build: .
-    image: ghcr.io/mrlarssonjr/minecraft
+    image: ${IMAGE:-ghcr.io/mrlarssonjr/minecraft}
     volumes:
       - minecraft:/minecraft
     ports:
