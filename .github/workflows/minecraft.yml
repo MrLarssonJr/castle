@@ -59,15 +59,15 @@ jobs:
           echo "${SSH}" > ~/.ssh/id_rsa
           echo "${HOST_FINGER_PRINT}" >> ~/.ssh/known_hosts
       - name: Create compose.yaml
-        uses: mikefarah/yq@master
         env:
           IMAGE: ${{ needs.build.outputs.tag }}
-        with:
-          cmd: docker compose -f stacks/minecraft/compose.yaml config > compose.yaml
+        run: docker compose -f stacks/minecraft/compose.yaml config > compose.yaml
       - name: debug compose.yaml
         run: cat compose.yaml
       - name: Touch up compose.yaml
-        run: cat compose.yaml | yq 'del(.name) | with(.services[].ports[]; .published = (.published | to_number) )' > fixed_compose.yaml
+        uses: mikefarah/yq@master
+        with:
+          cmd: cat compose.yaml | yq 'del(.name) | with(.services[].ports[]; .published = (.published | to_number) )' > fixed_compose.yaml
       - name: debug fixed_compose.yaml
         run: cat fixed_compose.yaml
       - name: ssh
