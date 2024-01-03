@@ -100,7 +100,7 @@ fn inner_derive_config(input: DeriveInput) -> TokenStream {
 						Ok(res)
 					})
 					.and_then(|arg| {
-						<#ty as ::config::FromArg>::parse_arg(arg.as_str()).map_err(|err| {
+						<#ty as ::config::FromArg>::parse_arg(arg.as_str().trim()).map_err(|err| {
 							::config::ArgumentParseError::NotParseable {
 								name: #env_file_var,
 								ty: ::std::any::type_name::<#ty>(),

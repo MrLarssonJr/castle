@@ -1,5 +1,4 @@
 use ::config::FromConfig;
-use anyhow::Context;
 use chrono::{DateTime, Duration, Local, Utc};
 use error::ResultExt;
 use reqwest::Client;
@@ -15,7 +14,8 @@ mod token_manager;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
-	let config = Config::parse().must();
+	println!("hello");
+	let config = dbg!(Config::parse().must());
 
 	let pool = PgPoolOptions::new()
 		.max_connections(5)

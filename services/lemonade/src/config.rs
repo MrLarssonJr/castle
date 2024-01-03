@@ -1,8 +1,8 @@
 use config::Config;
 
-#[derive(Config)]
+#[derive(Debug, Config)]
 pub struct Config {
-	#[env_file = "NORDIGEN_SECRET_ID_FILE"]
+	#[env = "PG_USER"]
 	pub pg_user: String,
 	#[env_file = "PG_PASSWORD_FILE"]
 	pub pg_password: String,
