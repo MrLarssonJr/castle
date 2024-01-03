@@ -2,7 +2,7 @@
 resolver = "2"
 
 members = [
-	"bins/waypointer",
-	"bins/lemonade",
+	"services/waypointer",
+	"services/lemonade",
 	"libs/config", "libs/config_macro", "libs/error",
 ]
