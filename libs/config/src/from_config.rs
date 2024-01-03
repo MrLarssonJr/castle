@@ -1,7 +1,5 @@
-use std::error::Error;
+use crate::argument_parse_error::ArgumentParseError;
 
 pub trait FromConfig: Sized {
-	type Error: Error;
-
-	fn parse() -> Result<Self, Self::Error>;
+	fn parse() -> Result<Self, ArgumentParseError>;
 }
