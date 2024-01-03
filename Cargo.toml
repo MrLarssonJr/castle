@@ -4,5 +4,5 @@ resolver = "2"
 members = [
 	"bins/waypointer",
 	"bins/lemonade",
-	"libs/config", "libs/config_macro",
+	"libs/config", "libs/config_macro", "libs/error",
 ]

@@ -17,3 +17,5 @@ serde_json = "1.0.108"
 maplit = "1.0.2"
 serde = { version = "1.0.192", features = ["alloc"] }
 thiserror = "1.0.50"
+config = { path = "../../libs/config" }
+error = { path = "../../libs/error" }

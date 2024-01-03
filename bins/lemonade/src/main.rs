@@ -1,4 +1,7 @@
+use ::config::FromConfig;
+use anyhow::Context;
 use chrono::{DateTime, Duration, Local, Utc};
+use error::ResultExt;
 use reqwest::Client;
 use sqlx::postgres::PgPoolOptions;
 
@@ -12,20 +15,29 @@ mod token_manager;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
-	let config = dbg!(Config::parse_from_env());
+	let config = Config::parse().must();
 
 	let pool = PgPoolOptions::new()
 		.max_connections(5)
-		.connect(&config.pg.connection_url()).await?;
+		.connect(&config.pg_connection_url())
+		.await?;
 
 	let client = Client::new();
 
-	let token_manager = TokenManager::new(config.nordigen.secret_id, config.nordigen.secret_key, NordigenTokenClient { client: &client });
+	let token_manager = TokenManager::new(
+		config.nordigen_secret_id,
+		config.nordigen_secret_key,
+		NordigenTokenClient { client: &client },
+	);
 	let token = token_manager.access_token().await?;
 	println!("{token}");
 
 	let now = Local::now();
-	let row: (i32, DateTime<Local>) = sqlx::query_as("INSERT INTO lemonade.lemonade.log (timestamp) VALUES ( $1 ) RETURNING *;").bind(now).fetch_one(&pool).await?;
+	let row: (i32, DateTime<Local>) =
+		sqlx::query_as("INSERT INTO lemonade.lemonade.log (timestamp) VALUES ( $1 ) RETURNING *;")
+			.bind(now)
+			.fetch_one(&pool)
+			.await?;
 	println!("{row:?}");
 
 	Ok(())
@@ -47,34 +59,20 @@ impl<'client> TokenClient for NordigenTokenClient<'client> {
 		let start = Utc::now();
 		let res = nordigen::token::new(self.client, args).await?;
 
-		let access = Token::new(
-			res.access,
-			start + Duration::seconds(res.access_expires)
-		);
+		let access = Token::new(res.access, start + Duration::seconds(res.access_expires));
 
-		let refresh = Token::new(
-			res.refresh,
-			start + Duration::seconds(res.refresh_expires)
-		);
+		let refresh = Token::new(res.refresh, start + Duration::seconds(res.refresh_expires));
 
-		Ok(AccessAndRefreshToken {
-			access,
-			refresh,
-		})
+		Ok(AccessAndRefreshToken { access, refresh })
 	}
 
 	async fn refresh(&self, refresh: &str) -> Result<Token, Self::Error> {
-		let args = nordigen::token::RefreshArgs {
-			refresh,
-		};
+		let args = nordigen::token::RefreshArgs { refresh };
 
 		let start = Utc::now();
 		let res = nordigen::token::refresh(self.client, args).await?;
 
-		let access = Token::new(
-			res.access,
-			start + Duration::seconds(res.access_expires)
-		);
+		let access = Token::new(res.access, start + Duration::seconds(res.access_expires));
 
 		Ok(access)
 	}
