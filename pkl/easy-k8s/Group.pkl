@@ -2,7 +2,6 @@ open module Group
 import "@k8s/K8sResource.pkl"
 import "Component.pkl"
 import "Group.pkl"
-import "Part.pkl"
 
 name: String
 hidden children: Listing<(Component|Group)>
@@ -10,18 +9,12 @@ hidden children: Listing<(Component|Group)>
 hidden fixed components: Map<String, Component> = children.toList()
   .map((child) -> if (child is Component) (child) { id = child.id name = "\(module.name)-\(child.name)" } else (child) { name = "\(module.name)-\(child.name)" })
   .flatMap((child) -> if (child is Component) List(child) else child.components.values)
-  .map((component) -> (component) { id = component.id parts = module.parts })
+  .map((component) -> (component) { id = component.id components = module.components })
   .toMap((component) -> component.id, (component) -> component)
 
-hidden fixed parts: Mapping<String, Part> = new {
-  for (id, component in components) {
-    [id] = component.part
-  }
-}
-
 fixed resources: Listing<K8sResource> = new {
-  for (_, part in parts) {
-    ...part.resources
+  for (_, component in components) {
+    ...component.resources
   }
 }
 

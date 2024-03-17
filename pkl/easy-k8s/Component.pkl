@@ -1,9 +1,9 @@
 abstract module Component
 import "@random/Random.pkl"
-import "Part.pkl"
+import "Component.pkl"
+import "@k8s/K8sResource.pkl"
 
 name: String
-part: Part
-
 id: String = Random.gen()
-parts: Mapping<String, Part> = new {}
+components: Map<String, Component>
+fixed resources: Listing<K8sResource>

@@ -1,31 +1,27 @@
-module Database extends "@easy-k8s/Component.pkl"
-import "@easy-k8s/App.pkl"
-import "@easy-k8s/Secret.pkl"
+module Database extends "@easy-k8s/App.pkl"
+import "DatabaseSecret.pkl"
 
-name = "database"
 password_secret_id: String
 
-part = new App {
-  name = module.name
-  ports {
-    ["postgres"] = 5432
-  }
-  image = "postgres:16.2"
-  env {
-    new {
-      name = "POSTGRES_PASSWORD"
-      valueFrom {
-        secretKeyRef {
-          name = (module.parts[password_secret_id] as Secret).name
-          key = "password"
+name = "database"
+ports {
+  ["postgres"] = 5432
+}
+image = "postgres:16.2"
+env {
+  new {
+    name = "POSTGRES_PASSWORD"
+    valueFrom {
+      secretKeyRef = let (secret = module.components[password_secret_id] as DatabaseSecret) new {
+          name = secret.name
+          key = secret.key
         }
-      }
     }
   }
-  volumes {
-    ["data"] {
-      size = 5.gib
-      path = "/var/lib/postgresql/data"
-    }
+}
+volumes {
+  ["data"] {
+    size = 5.gib
+    path = "/var/lib/postgresql/data"
   }
 }

@@ -1,50 +1,47 @@
-module Backend extends "@easy-k8s/Component.pkl"
+module Backend extends "@easy-k8s/App.pkl"
 import "@easy-k8s/App.pkl"
-import "@easy-k8s/Secret.pkl"
+import "DatabaseSecret.pkl"
 
 class NordigenSpec {
   secret_id: String
   secret_key: String
 }
 
-name = "backend"
 database_id: String
 password_secret_id: String
 nordigen: NordigenSpec
 
-part = new App {
-  name = module.name
-  image = "lemonade:latest"
-  imagePullPolicy = "IfNotPresent"
-  env {
-    new {
-      name = "PG_USER"
-      value = "postgres"
-    }
-    new {
-      name = "PG_PASSWORD"
-      valueFrom {
-        secretKeyRef {
-          name = (module.parts[password_secret_id] as Secret).name
-          key = "password"
+name = "backend"
+image = "lemonade:latest"
+imagePullPolicy = "IfNotPresent"
+env {
+  new {
+    name = "PG_USER"
+    value = "postgres"
+  }
+  new {
+    name = "PG_PASSWORD"
+    valueFrom {
+      secretKeyRef = let (secret = module.components[password_secret_id] as DatabaseSecret) new {
+          name = secret.name
+          key = secret.key
         }
-      }
     }
-    new {
-      name = "PG_HOST"
-      value = (module.parts[database_id] as App).serviceUrl
-    }
-    new {
-      name = "PG_DB"
-      value = "lemonade"
-    }
-    new {
-      name = "NORDIGEN_SECRET_ID"
-      value = nordigen.secret_id
-    }
-    new {
-      name = "NORDIGEN_SECRET_KEY"
-      value = nordigen.secret_key
-    }
+  }
+  new {
+    name = "PG_HOST"
+    value = (module.components[database_id] as App).serviceUrl
+  }
+  new {
+    name = "PG_DB"
+    value = "lemonade"
+  }
+  new {
+    name = "NORDIGEN_SECRET_ID"
+    value = nordigen.secret_id
+  }
+  new {
+    name = "NORDIGEN_SECRET_KEY"
+    value = nordigen.secret_key
   }
 }

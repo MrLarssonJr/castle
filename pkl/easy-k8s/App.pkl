@@ -1,17 +1,15 @@
-module App extends "Part.pkl"
+open module App extends "Component.pkl"
 
-import "@k8s/K8sResource.pkl"
 import "@k8s/api/core/v1/EnvVar.pkl"
 import "@k8s/api/apps/v1/StatefulSet.pkl"
 import "@k8s/api/core/v1/Service.pkl"
 import "@k8s/api/apps/v1/Deployment.pkl"
 import "@k8s/K8sObject.pkl"
 
-name: String
 image: String
 namespace: K8sObject.Rfc1123Label?
 labels: Mapping<String, String> = new {
-  ["app"] = name
+  ["app"] = module.name
 }
 ports: Mapping<String, Service.PortNumber>?
 volumes: Mapping<String, Volume>?
@@ -25,7 +23,7 @@ local includeService = isStatefulSet || isNotNull(ports)
 
 
 fixed serviceUrl: String? = if (includeService) "\(name).\(namespace ?? "default")" else null
-fixed resources: Listing<K8sResource> = new {
+fixed resources {
   when (includeService) {
     new Service {
       metadata {
