@@ -1,0 +1,147 @@
+module App extends "Part.pkl"
+
+import "@k8s/K8sResource.pkl"
+import "@k8s/api/core/v1/EnvVar.pkl"
+import "@k8s/api/apps/v1/StatefulSet.pkl"
+import "@k8s/api/core/v1/Service.pkl"
+import "@k8s/api/apps/v1/Deployment.pkl"
+import "@k8s/K8sObject.pkl"
+
+name: String
+image: String
+namespace: K8sObject.Rfc1123Label?
+labels: Mapping<String, String> = new {
+  ["app"] = name
+}
+ports: Mapping<String, Service.PortNumber>?
+volumes: Mapping<String, Volume>?
+replicas: Int(0 < this) = 1
+env: Listing<EnvVar>
+imagePullPolicy: ("Always"|"Never"|"IfNotPresent")?
+
+local function isNotNull(val: Any): Boolean = !(val is Null)
+local isStatefulSet = isNotNull(volumes)
+local includeService = isStatefulSet || isNotNull(ports)
+
+
+fixed serviceUrl: String? = if (includeService) "\(name).\(namespace ?? "default")" else null
+fixed resources: Listing<K8sResource> = new {
+  when (includeService) {
+    new Service {
+      metadata {
+        name = module.name
+        labels = module.labels
+        namespace = module.namespace
+      }
+      spec {
+        ports {
+          for (n, p in module.ports!!) {
+            new {
+              port = p
+              name = n
+            }
+          }
+        }
+        selector = module.labels
+      }
+    }
+  }
+
+  if (isStatefulSet) new StatefulSet {
+    metadata {
+      name = module.name
+      namespace = module.namespace
+      labels = module.labels
+    }
+
+    spec {
+      selector {
+        matchLabels = module.labels
+      }
+      serviceName = module.name
+      replicas = module.replicas
+      template {
+        metadata {
+          labels = module.labels
+        }
+        spec {
+          containers {
+            new {
+              name = module.name
+              image = module.image
+              env = module.env
+              imagePullPolicy = module.imagePullPolicy
+              ports {
+                for (n, p in module.ports!!) {
+                  new {
+                    containerPort = p
+                    name = n
+                  }
+                }
+              }
+              volumeMounts {
+                for (n, vol in module.volumes!!) {
+                  new {
+                    name = n
+                    mountPath = vol.path
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+      volumeClaimTemplates {
+        for (n, vol in module.volumes!!) {
+          new {
+            metadata {
+              name = n
+            }
+            spec {
+              accessModes {
+                "ReadWriteOnce"
+              }
+              resources {
+                requests {
+                  ["storage"] = vol.size
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  } else new Deployment {
+    metadata {
+      name = module.name
+      labels = module.labels
+      namespace = module.namespace
+    }
+    spec {
+      replicas = module.replicas
+      selector {
+        matchLabels = module.labels
+      }
+      template {
+        metadata {
+          labels = module.labels
+        }
+        spec {
+          containers {
+            new {
+              name = module.name
+              image = module.image
+              env = module.env
+              imagePullPolicy = module.imagePullPolicy
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+class Volume {
+  path: String
+  size: DataSize
+}

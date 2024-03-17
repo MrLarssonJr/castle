@@ -1,8 +1,0 @@
-[workspace]
-resolver = "2"
-
-members = [
-	"services/waypointer",
-	"services/lemonade",
-	"libs/config", "libs/config_macro", "libs/error",
-]

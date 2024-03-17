@@ -1,0 +1,42 @@
+module Backend extends "@easy-k8s/Component.pkl"
+import "@easy-k8s/App.pkl"
+
+class NordigenSpec {
+  secret_id: String
+  secret_key: String
+}
+
+name = "backend"
+database_id: String
+nordigen: NordigenSpec
+
+part = new App {
+  name = module.name
+  image = "lemonade:latest"
+  env {
+    new {
+      name = "PG_USER"
+      value = "postgres"
+    }
+    new {
+      name = "PG_PASSWORD"
+      value = "SuperStrongPassword!"
+    }
+    new {
+      name = "PG_HOST"
+      value = (module.parts[database_id] as App).serviceUrl
+    }
+    new {
+      name = "PG_DB"
+      value = "lemonade"
+    }
+    new {
+      name = "NORDIGEN_SECRET_ID"
+      value = nordigen.secret_id
+    }
+    new {
+      name = "NORDIGEN_SECRET_KEY"
+      value = nordigen.secret_key
+    }
+  }
+}

@@ -1,0 +1,9 @@
+amends "local.pkl"
+
+waypointer {
+  enabled = true
+  domain = "larsson.family"
+  host = "jesper"
+  interval = 1.h
+  password = ""
+}

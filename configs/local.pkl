@@ -1,0 +1,12 @@
+amends "@castle/Castle.pkl"
+
+lemonade {
+  nordigen {
+    secret_id = "750c070e-d7a5-45ec-b069-64def0728b4f"
+    secret_key = "581d2dc1e98c015db87b5a709e49a30f3740ff1dbc7de83165dede8e21a85c66d8c5f7c5563df26b0720147d9c00a01f7fe6e3b53aee508b4e077b973397ddf8"
+  }
+}
+
+waypointer {
+  enabled = false
+}

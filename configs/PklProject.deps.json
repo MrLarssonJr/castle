@@ -1,0 +1,27 @@
+{
+  "schemaVersion": 1,
+  "resolvedDependencies": {
+    "package://pkl.larsson.family/castle@0": {
+      "type": "local",
+      "uri": "projectpackage://pkl.larsson.family/castle@0.1.0",
+      "path": "../pkl/castle"
+    },
+    "package://pkl.larsson.family/random@0": {
+      "type": "local",
+      "uri": "projectpackage://pkl.larsson.family/random@0.1.0",
+      "path": "../pkl/random"
+    },
+    "package://pkl.larsson.family/easy-k8s@0": {
+      "type": "local",
+      "uri": "projectpackage://pkl.larsson.family/easy-k8s@0.1.0",
+      "path": "../pkl/easy-k8s"
+    },
+    "package://pkg.pkl-lang.org/pkl-k8s/k8s@1": {
+      "type": "remote",
+      "uri": "projectpackage://pkg.pkl-lang.org/pkl-k8s/k8s@1.0.1",
+      "checksums": {
+        "sha256": "75c6d66d94c335417a3c502e107aaeadf7a60b4e1d34b2c979afe11193205a1a"
+      }
+    }
+  }
+}

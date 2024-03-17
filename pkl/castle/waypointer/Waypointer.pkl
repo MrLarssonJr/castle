@@ -1,0 +1,40 @@
+module Database extends "@easy-k8s/Component.pkl"
+import "@easy-k8s/App.pkl"
+
+name = "waypointer"
+host: String
+domain: String
+password: String
+interval: Duration
+
+part = new App {
+  name = module.name
+  ports {
+    ["postgres"] = 5432
+  }
+  image = "waypointer:latest"
+  env {
+    new {
+      name = "HOST"
+      value = host
+    }
+    new {
+      name = "DOMAIN"
+      value = domain
+    }
+    new {
+      name = "PASSWORD"
+      value = password
+    }
+    new {
+      name = "INTERVAL"
+      value = interval.toUnit("s").value.toString()
+    }
+  }
+  volumes {
+    ["data"] {
+      size = 5.gib
+      path = "/var/lib/postgresql/data"
+    }
+  }
+}

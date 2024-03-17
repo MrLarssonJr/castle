@@ -1,0 +1,42 @@
+module Castle extends "@easy-k8s/Group.pkl"
+import "lemonade/Lemonade.pkl"
+import "waypointer/Waypointer.pkl"
+
+class LemonadeSpec {
+  enabled: Boolean
+  nordigen: Lemonade.NordigenSpec
+}
+
+class WaypointerSpec {
+  enabled: Boolean
+  host: String
+  domain: String
+  password: String
+  interval: Duration
+}
+
+lemonade: LemonadeSpec = new {
+  enabled = true
+}
+
+waypointer: WaypointerSpec = new {
+  enabled = true
+}
+
+name = "castle"
+children {
+  when (lemonade.enabled) {
+    new Lemonade {
+      nordigen = lemonade.nordigen
+    }
+  }
+
+  when (waypointer.enabled) {
+    new Waypointer {
+      host = waypointer.host
+      domain = waypointer.domain
+      password = waypointer.password
+      interval = waypointer.interval
+    }
+  }
+}

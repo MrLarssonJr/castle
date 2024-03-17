@@ -1,0 +1,9 @@
+abstract module Component
+import "@random/Random.pkl"
+import "Part.pkl"
+
+name: String
+part: Part
+
+id: String = Random.gen()
+parts: Mapping<String, Part> = new {}

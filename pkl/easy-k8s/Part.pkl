@@ -1,0 +1,6 @@
+abstract module Part
+import "@k8s/K8sResource.pkl"
+
+name: String
+
+fixed resources: Listing<K8sResource>

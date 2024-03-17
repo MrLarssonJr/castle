@@ -1,0 +1,12 @@
+module Random
+import "pkl:Benchmark"
+
+local function fib(n: Int): Int = if (n == 0) 0 else if (n == 1) 1 else fib(n - 1) + fib(n - 2)
+
+function gen(): String =
+  new Benchmark.Microbenchmark {
+    iterations = 100
+    iterationTime = 100.us
+    isVerbose = false
+    expression = fib(5)
+  }.run().mean.toUnit("us").toString().sha256

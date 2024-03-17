@@ -1,0 +1,20 @@
+module Lemonade extends "@easy-k8s/Group.pkl"
+import "Database.pkl"
+import "Backend.pkl"
+
+typealias NordigenSpec = Backend.NordigenSpec
+
+nordigen: NordigenSpec
+local input_nordigen = nordigen
+
+hidden db = new Database {}
+hidden backend = new Backend {
+  nordigen = input_nordigen
+  database_id = db.id
+}
+
+name = "lemonade"
+children {
+  db
+  backend
+}

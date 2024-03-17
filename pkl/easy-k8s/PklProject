@@ -1,0 +1,13 @@
+amends "pkl:Project"
+
+package {
+  name = "easy-k8s"
+  baseUri = "package://pkl.larsson.family/\(name)"
+  version = "0.1.0"
+  packageZipUrl = "https://pkl.larsson.family/\(name)?version=\(version)"
+}
+
+dependencies {
+  ["random"] = import("../random/PklProject")
+  ["k8s"] { uri = "package://pkg.pkl-lang.org/pkl-k8s/k8s@1.0.1" }
+}
