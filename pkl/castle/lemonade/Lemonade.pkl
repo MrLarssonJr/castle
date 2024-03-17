@@ -1,20 +1,30 @@
 module Lemonade extends "@easy-k8s/Group.pkl"
 import "Database.pkl"
 import "Backend.pkl"
+import "DatabaseSecret.pkl"
 
 typealias NordigenSpec = Backend.NordigenSpec
 
+
 nordigen: NordigenSpec
 local input_nordigen = nordigen
+database_password: String
 
-hidden db = new Database {}
+hidden db_secret = new DatabaseSecret {
+  password = database_password
+}
+hidden db = new Database {
+  password_secret_id = db_secret.id
+}
 hidden backend = new Backend {
   nordigen = input_nordigen
   database_id = db.id
+  password_secret_id = db_secret.id
 }
 
 name = "lemonade"
 children {
+  db_secret
   db
   backend
 }

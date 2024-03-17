@@ -5,6 +5,7 @@ import "waypointer/Waypointer.pkl"
 class LemonadeSpec {
   enabled: Boolean
   nordigen: Lemonade.NordigenSpec
+  database_password: String
 }
 
 class WaypointerSpec {
@@ -28,6 +29,7 @@ children {
   when (lemonade.enabled) {
     new Lemonade {
       nordigen = lemonade.nordigen
+      database_password = lemonade.database_password
     }
   }
 

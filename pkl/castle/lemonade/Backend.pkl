@@ -1,5 +1,6 @@
 module Backend extends "@easy-k8s/Component.pkl"
 import "@easy-k8s/App.pkl"
+import "@easy-k8s/Secret.pkl"
 
 class NordigenSpec {
   secret_id: String
@@ -8,11 +9,13 @@ class NordigenSpec {
 
 name = "backend"
 database_id: String
+password_secret_id: String
 nordigen: NordigenSpec
 
 part = new App {
   name = module.name
   image = "lemonade:latest"
+  imagePullPolicy = "IfNotPresent"
   env {
     new {
       name = "PG_USER"
@@ -20,7 +23,12 @@ part = new App {
     }
     new {
       name = "PG_PASSWORD"
-      value = "SuperStrongPassword!"
+      valueFrom {
+        secretKeyRef {
+          name = (module.parts[password_secret_id] as Secret).name
+          key = "password"
+        }
+      }
     }
     new {
       name = "PG_HOST"

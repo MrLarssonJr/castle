@@ -1,7 +1,9 @@
 module Database extends "@easy-k8s/Component.pkl"
 import "@easy-k8s/App.pkl"
+import "@easy-k8s/Secret.pkl"
 
 name = "database"
+password_secret_id: String
 
 part = new App {
   name = module.name
@@ -12,7 +14,12 @@ part = new App {
   env {
     new {
       name = "POSTGRES_PASSWORD"
-      value = "SuperStrongPassword!"
+      valueFrom {
+        secretKeyRef {
+          name = (module.parts[password_secret_id] as Secret).name
+          key = "password"
+        }
+      }
     }
   }
   volumes {
