@@ -28,9 +28,3 @@ env {
     value = interval.toUnit("s").value.toString()
   }
 }
-volumes {
-  ["data"] {
-    size = 5.gib
-    path = "/var/lib/postgresql/data"
-  }
-}
