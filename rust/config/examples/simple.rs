@@ -3,6 +3,7 @@ use std::error::Error;
 
 #[derive(Debug, Config)]
 struct Config {
+	#[allow(unused)]
 	#[env = "BAR"]
 	bar: u32,
 }

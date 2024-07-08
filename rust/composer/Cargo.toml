@@ -1,0 +1,13 @@
+[package]
+name = "composer"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+petgraph = "0.6.5"
+thiserror = "1.0.61"
+chumsky = "0.9.3"
+lalrpop-util = { version = "0.20.2", features = ["lexer"] }
+
+[build-dependencies]
+lalrpop = { version = "0.20.2", features = ["lexer"] }

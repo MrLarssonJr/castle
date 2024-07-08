@@ -5,23 +5,32 @@ password_secret_id: String
 
 name = "database"
 ports {
-  ["postgres"] = 5432
+  ["mongo"] = 27017
 }
-image = "postgres:16.2"
-env {
-  new {
-    name = "POSTGRES_PASSWORD"
-    valueFrom {
-      secretKeyRef = let (secret = module.components[password_secret_id] as DatabaseSecret) new {
+image = "mongo:6.0.14"
+env = let (secret = module.components[password_secret_id] as DatabaseSecret) new {
+    new {
+      name = "MONGO_INITDB_ROOT_USERNAME"
+      valueFrom {
+        secretKeyRef {
           name = secret.name
-          key = secret.key
+          key = secret.username_key
         }
+      }
+    }
+    new {
+      name = "MONGO_INITDB_ROOT_PASSWORD"
+      valueFrom {
+        secretKeyRef {
+          name = secret.name
+          key = secret.password_key
+        }
+      }
     }
   }
-}
 volumes {
   ["data"] {
     size = 5.gib
-    path = "/var/lib/postgresql/data"
+    path = "/data/db"
   }
 }

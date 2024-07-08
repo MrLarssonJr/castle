@@ -1,0 +1,103 @@
+use std::str::FromStr;
+use std::rc::Rc;
+
+use crate::ast::*;
+
+grammar;
+
+pub Expression: Expression = {
+    <l:EagerBooleanBinary> <tail:(LazyBooleanOperator EagerBooleanBinary)*> => Expression::lazy_boolean_binary(l, tail),
+};
+
+LazyBooleanOperator = {
+    "||",
+    "&&",
+};
+
+EagerBooleanBinaryOperator = {
+    "<",
+    "<=",
+    "==",
+    "!=",
+    ">=",
+    ">",
+};
+
+EagerBooleanBinary: Expression = {
+    <l:EagerBooleanUnary> <tail:(EagerBooleanBinaryOperator EagerBooleanUnary)*> => Expression::eager_boolean_binary(l, tail),
+};
+
+EagerBooleanUnary: Expression = {
+    <nots:("!")*> <atom:Product> => Expression::eager_boolean_unary(nots, atom),
+};
+
+ProductOperator = {
+    "*",
+    "/"
+};
+
+Product: Expression = {
+    <l:Factor> <tail:(ProductOperator Factor)*> => Expression::product(l, tail),
+};
+
+Factor: Expression = {
+    <l:Term> <tail:(SummationOperator Term)*> => Expression::sum(l, tail),
+};
+
+SummationOperator = {
+    "+",
+    "-"
+};
+
+Term: Expression = {
+    <negations:("-")*> <atom:NegationOperand> => Expression::unary(negations, atom),
+};
+
+NegationOperand: Expression = {
+    Atom,
+};
+
+Atom: Expression = {
+    Literal,
+    FunctionApplication,
+    LetIn,
+    IfElse,
+    Identifier => Expression::Identifier(IdentifierExpression(<>)),
+}
+
+IfElse: Expression = "if" <condition:Expression> "{" <then_branch:Expression> "}" "else" "{" <else_branch:Expression> "}" => Expression::IfElse(IfElseExpression {
+    condition: Rc::new(condition),
+    then_branch: Rc::new(then_branch),
+    else_branch: Rc::new(else_branch),
+});
+
+LetIn: Expression = "let" <binding:Identifier> "=" <value:Expression> "in" <body:Expression> ";" => Expression::LetIn(LetInExpression { binding, value: Rc::new(value), body: Rc::new(body) });
+
+FunctionApplication: Expression = <function:Atom> "(" <arguments:Comma<Expression>?> ")" => Expression::FunctionApplication(FunctionApplicationExpression {
+    function: Rc::new(function),
+    arguments: arguments.unwrap_or_else(|| Vec::new()),
+});
+
+Literal: Expression = {
+    "fn" "(" <parameters:Comma<Identifier>?> ")" "{" <body:Expression> "}" => match parameters {
+        Some(parameters) => {
+            let parameters: Vec<Identifier> = parameters;
+            Expression::FunctionDefinition(FunctionDefinitionExpression {
+                parameters,
+                body: Rc::new(body),
+            })
+        },
+        None => Expression::FunctionDefinition(FunctionDefinitionExpression {
+            parameters: Vec::new(),
+            body: Rc::new(body),
+        }),
+    },
+    r"[0-9]+" => Expression::NumberLiteral(NumberLiteralExpression(isize::from_str(<>).unwrap()))
+};
+
+Comma<T>: Vec<T> = <head:T> <mut tail:("," <T>)*> => {
+    tail.insert(0, head);
+    tail
+};
+
+Identifier: Identifier = r"[a-zA-Z_-]+" => Identifier(String::from(<>));

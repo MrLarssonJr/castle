@@ -8,9 +8,19 @@ edition = "2021"
 [dependencies]
 anyhow = "1.0.75"
 tokio = { version = "1.34.0", features = ["macros", "rt-multi-thread"] }
-sqlx = { version = "0.7.2", features = ["runtime-tokio", "postgres", "uuid", "chrono", ] }
 chrono = "0.4.31"
 thiserror = "1.0.50"
 config = { path = "../config" }
 error = { path = "../error" }
 http_api = { path = "../http_api" }
+uuid = { version = "1.7.0", features = ["v7"] }
+axum = "0.7.4"
+async-graphql = { version = "7.0.3", features = ["uuid"] }
+async-graphql-axum = "7.0.3"
+logger = { path = "../logger" }
+tower = "0.4.13"
+tower-http = { version = "0.5.2", features = ["trace"] }
+tracing = "0.1.40"
+tracing-subscriber = { version = "0.3.18", features = ["json"] }
+mongodb = { version = "2.8.2", features = ["bson-uuid-1"] }
+serde = { version = "1.0.197", features = ["derive", "rc"] }

@@ -1,48 +1,50 @@
-use ::config::FromConfig;
-use ::error::ResultExt;
-use chrono::{DateTime, Local};
-use sqlx::postgres::PgPoolOptions;
-use std::thread::park;
-
+use crate::api::Api;
 use crate::config::Config;
+use crate::model::User;
 use crate::nordigen_token_client::NordigenTokenClient;
 use crate::token_manager::TokenManager;
+use ::config::FromConfig;
+use ::error::ResultExt;
+use mongodb::Client;
+use std::time::Duration;
+use tracing::info;
+use uuid::{NoContext, Timestamp, Uuid};
 
+mod api;
 mod config;
 mod error;
+mod model;
 mod nordigen_token_client;
 mod token_manager;
 
-#[tokio::main]
-async fn main() -> anyhow::Result<()> {
-	println!("hello");
-	let config = dbg!(Config::parse().must());
+fn main() -> anyhow::Result<()> {
+	tracing_subscriber::fmt().compact().init();
+	info!("initialized tracing subscriber");
 
-	let pool = PgPoolOptions::new()
-		.max_connections(5)
-		.connect(&config.pg_connection_url())
-		.await?;
+	let config = Config::parse().must();
+	info!("parsed config");
 
-	let nordigen_client = http_api::nordigen::Client::new("https://ob.gocardless.com");
-	let token_client = NordigenTokenClient::new(&nordigen_client);
+	tokio::runtime::Builder::new_multi_thread()
+		.enable_all()
+		.build()
+		.unwrap()
+		.block_on(async_entrypoint(config))?;
 
+	Ok(())
+}
+
+async fn async_entrypoint(config: Config) -> anyhow::Result<()> {
+	let mongo_client = Client::with_options(config.db_connection_options())?;
+	info!("initialised mongo client");
+
+	let nordigen_client = http_api::nordigen::Client::new("https://bankaccountdata.gocardless.com");
 	let token_manager = TokenManager::new(
 		config.nordigen_secret_id,
 		config.nordigen_secret_key,
-		token_client,
+		NordigenTokenClient::new(nordigen_client.clone()),
 	);
-	let token = token_manager.access_token().await?;
-	println!("{token}");
 
-	let now = Local::now();
-	let row: (i32, DateTime<Local>) =
-		sqlx::query_as("INSERT INTO lemonade.lemonade.log (timestamp) VALUES ( $1 ) RETURNING *;")
-			.bind(now)
-			.fetch_one(&pool)
-			.await?;
-	println!("{row:?}");
+	Api::run(mongo_client, nordigen_client, token_manager).await;
 
-	loop {
-		park()
-	}
+	Ok(())
 }

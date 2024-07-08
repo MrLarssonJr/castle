@@ -1,0 +1,7 @@
+let fib = fn(fib, n) {
+    if n < 2 {
+        n
+    } else {
+        fib(fib, n - 2) + fib(fib, n - 1)
+    }
+} in fib(fib, 10);

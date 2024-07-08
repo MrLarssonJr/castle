@@ -72,7 +72,7 @@ impl<C: TokenClient> TokenManager<C> {
 
 	async fn refresh_refresh_token(&self) -> anyhow::Result<Arc<str>> {
 		let AccessAndRefreshToken { access, refresh } =
-			dbg!(self.token_client.acquire(&self.secret).await?);
+			self.token_client.acquire(&self.secret).await?;
 
 		let res = access.value.clone();
 
