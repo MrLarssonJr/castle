@@ -28,7 +28,7 @@ EagerBooleanBinary: Expression = {
 };
 
 EagerBooleanUnary: Expression = {
-    <nots:("!")*> <atom:Product> => Expression::eager_boolean_unary(nots, atom),
+    <nots:("!")*> <atom:Product> => Expression::unary(nots, atom),
 };
 
 ProductOperator = {

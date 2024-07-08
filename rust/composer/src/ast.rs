@@ -8,10 +8,9 @@ pub enum Expression {
 	FunctionApplication(FunctionApplicationExpression),
 	FunctionDefinition(FunctionDefinitionExpression),
 	NumberLiteral(NumberLiteralExpression),
-	Negation(NegationExpression),
 	LetIn(LetInExpression),
 	IfElse(IfElseExpression),
-	Not(NotExpression),
+	UnaryOperation(UnaryOperationExpression),
 	BinaryOperation(BinaryOperationExpression),
 }
 
@@ -46,110 +45,23 @@ impl Expression {
 		res
 	}
 
-	pub fn unary(operators: Vec<&str>, atom: Expression) -> Expression {
-		let mut res = atom;
-
+	pub fn unary(mut operators: Vec<&str>, operand: Expression) -> Expression {
+		let mut res = operand;
+		
+		operators.reverse();
 		for operator in operators {
-			res = match operator {
-				"-" => Expression::Negation(NegationExpression(Rc::new(res))),
+			let operation = match operator {
+				"-" => UnaryOperator::Negate,
+				"!" => UnaryOperator::Not,
 				_ => panic!("bad unary operator: {operator}"),
 			};
-		}
 
-		res
-	}
-
-	pub fn eager_boolean_unary(operators: Vec<&str>, atom: Expression) -> Expression {
-		let mut res = atom;
-
-		for operator in operators {
-			res = match operator {
-				"!" => Expression::Not(NotExpression(Rc::new(res))),
-				_ => panic!("bad unary operator: {operator}"),
-			};
+			res = Expression::UnaryOperation(UnaryOperationExpression { operation, operand: Rc::new(res) });
 		}
 
 		res
 	}
 }
-
-#[derive(Debug, PartialEq)]
-pub struct OrExpression {
-	pub left_hand_side: Expr,
-	pub right_hand_side: Expr,
-}
-
-#[derive(Debug, PartialEq)]
-pub struct AndExpression {
-	pub left_hand_side: Expr,
-	pub right_hand_side: Expr,
-}
-
-#[derive(Debug, PartialEq)]
-pub struct LessThanExpression {
-	pub left_hand_side: Expr,
-	pub right_hand_side: Expr,
-}
-
-#[derive(Debug, PartialEq)]
-pub struct LessThanOrEqualToExpression {
-	pub left_hand_side: Expr,
-	pub right_hand_side: Expr,
-}
-
-#[derive(Debug, PartialEq)]
-pub struct EqualToExpression {
-	pub left_hand_side: Expr,
-	pub right_hand_side: Expr,
-}
-
-#[derive(Debug, PartialEq)]
-pub struct NotEqualToExpression {
-	pub left_hand_side: Expr,
-	pub right_hand_side: Expr,
-}
-
-#[derive(Debug, PartialEq)]
-pub struct GreaterThanOrEqualToExpression {
-	pub left_hand_side: Expr,
-	pub right_hand_side: Expr,
-}
-
-#[derive(Debug, PartialEq)]
-pub struct GreaterThanExpression {
-	pub left_hand_side: Expr,
-	pub right_hand_side: Expr,
-}
-
-#[derive(Debug, PartialEq)]
-pub struct NotExpression(pub Expr);
-
-#[derive(Debug, PartialEq)]
-pub struct AdditionExpression {
-	pub left_hand_side: Expr,
-	pub right_hand_side: Expr,
-}
-
-#[derive(Debug, PartialEq)]
-pub struct SubtractionExpression {
-	pub left_hand_side: Expr,
-	pub right_hand_side: Expr,
-}
-
-#[derive(Debug, PartialEq)]
-pub struct ProductExpression {
-	pub left_hand_side: Expr,
-	pub right_hand_side: Expr,
-}
-
-#[derive(Debug, PartialEq)]
-pub struct DivisionExpression {
-	pub left_hand_side: Expr,
-	pub right_hand_side: Expr,
-}
-
-#[derive(Debug, PartialEq)]
-pub struct NegationExpression(pub Expr);
 
 #[derive(Debug, PartialEq)]
 pub struct NumberLiteralExpression(pub isize);
@@ -207,4 +119,16 @@ pub enum BinaryOperator {
 	NotEqualTo,
 	GreaterThanOrEqualTo,
 	GreaterThan,
+}
+
+#[derive(Debug, PartialEq)]
+pub struct UnaryOperationExpression {
+	pub operation: UnaryOperator,
+	pub operand: Expr,
+}
+
+#[derive(Debug, PartialEq)]
+pub enum UnaryOperator {
+	Negate,
+	Not,
 }

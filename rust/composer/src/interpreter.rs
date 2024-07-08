@@ -7,7 +7,7 @@ mod eval {
 	use thiserror::Error;
 
 	use crate::ast::{
-		BinaryOperationExpression, BinaryOperator, Expression, FunctionApplicationExpression, FunctionDefinitionExpression, Identifier, IdentifierExpression, IfElseExpression, LetInExpression, NegationExpression, NotExpression, NumberLiteralExpression
+		BinaryOperationExpression, BinaryOperator, Expression, FunctionApplicationExpression, FunctionDefinitionExpression, Identifier, IdentifierExpression, IfElseExpression, LetInExpression, NumberLiteralExpression, UnaryOperationExpression, UnaryOperator
 	};
 	use crate::interpreter::value::Value;
 
@@ -20,19 +20,18 @@ mod eval {
 		match ast {
 			Expression::NumberLiteral(number_literal) => {
 				eval_number_literal(bindings, number_literal)
-			}
-			Expression::Negation(negation) => eval_negation(bindings, negation),
+			},
 			Expression::Identifier(identifier) => eval_identifier(bindings, identifier),
 			Expression::FunctionApplication(function_application) => {
 				eval_function_application(bindings, function_application)
-			}
+			},
 			Expression::FunctionDefinition(function_definition) => {
 				eval_function_definition(bindings, function_definition)
-			}
+			},
 			Expression::LetIn(let_in) => eval_let_in(bindings, let_in),
 			Expression::IfElse(if_else) => eval_if_else(bindings, if_else),
-			Expression::Not(not) => eval_not(bindings, not),
 			Expression::BinaryOperation(binary_operation) => eval_binary_operation(bindings, binary_operation),
+			Expression::UnaryOperation(unary_operation) => eval_unary_operation(bindings, unary_operation),
 			
 		}
 	}
@@ -66,22 +65,21 @@ mod eval {
 		}
 	}
 
-	pub fn eval_not(
+	pub fn eval_unary_operation(
 		bindings: &HashMap<Identifier, Value>,
-		not: &NotExpression,
+		unary_operation: &UnaryOperationExpression,
 	) -> Result<Value, RuntimeException> {
-		let NotExpression(unary) = not;
+		let UnaryOperationExpression {
+			operation,
+			operand,
+		} = unary_operation;
 
-		eval_expression(bindings, unary)?.not()
-	}
+		let operand = eval_expression(bindings, &operand)?;
 
-	pub fn eval_negation(
-		bindings: &HashMap<Identifier, Value>,
-		negation: &NegationExpression,
-	) -> Result<Value, RuntimeException> {
-		let NegationExpression(unary) = negation;
-
-		eval_expression(bindings, unary)?.negate()
+		match operation {
+			UnaryOperator::Negate => operand.negate(),
+			UnaryOperator::Not => operand.not(),
+		}
 	}
 
 	pub fn eval_number_literal(
