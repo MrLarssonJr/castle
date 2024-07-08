@@ -9,115 +9,38 @@ pub enum Expression {
 	FunctionDefinition(FunctionDefinitionExpression),
 	NumberLiteral(NumberLiteralExpression),
 	Negation(NegationExpression),
-	Addition(AdditionExpression),
-	Subtraction(SubtractionExpression),
-	Product(ProductExpression),
-	Division(DivisionExpression),
 	LetIn(LetInExpression),
 	IfElse(IfElseExpression),
-	Or(OrExpression),
-	And(AndExpression),
-	LessThan(LessThanExpression),
-	LessThanOrEqualTo(LessThanOrEqualToExpression),
-	EqualTo(EqualToExpression),
-	NotEqualTo(NotEqualToExpression),
-	GreaterThanOrEqualTo(GreaterThanOrEqualToExpression),
-	GreaterThan(GreaterThanExpression),
 	Not(NotExpression),
+	BinaryOperation(BinaryOperationExpression),
 }
 
 impl Expression {
-	pub fn product(left_hand_side: Expression, tail: Vec<(&str, Expression)>) -> Expression {
-		let mut res = left_hand_side;
+	pub fn binary_operation(head: Expression, tail: Vec<(&str, Expression)>) -> Expression {
+		let mut res = head;
 
-		for (operator, right_hand_side) in tail {
-			res = match operator {
-				"*" => Expression::Product(ProductExpression {
-					left_hand_side: Rc::new(res),
-					right_hand_side: Rc::new(right_hand_side),
-				}),
-				"/" => Expression::Division(DivisionExpression {
-					left_hand_side: Rc::new(res),
-					right_hand_side: Rc::new(right_hand_side),
-				}),
-				_ => panic!("bad product operator: {operator}"),
+		for (operator, operand) in tail {
+			let operation = match operator {
+				"*" => BinaryOperator::Multiplication,
+				"/" => BinaryOperator::Division,
+				"+" => BinaryOperator::Addition,
+				"-" => BinaryOperator::Subtraction,
+				"||" => BinaryOperator::Or,
+				"&&" => BinaryOperator::And,
+				"<" => BinaryOperator::LessThan,
+				"<=" => BinaryOperator::LessThanOrEqualTo,
+				"==" => BinaryOperator::EqualTo,
+				"!=" => BinaryOperator::NotEqualTo,
+				">=" => BinaryOperator::GreaterThanOrEqualTo,
+				">" => BinaryOperator::GreaterThan,
+				_ => panic!("bad binary operator: {operator}"),
 			};
-		}
 
-		res
-	}
-
-	pub fn sum(left_hand_side: Expression, tail: Vec<(&str, Expression)>) -> Expression {
-		let mut res = left_hand_side;
-
-		for (operator, right_hand_side) in tail {
-			res = match operator {
-				"+" => Expression::Addition(AdditionExpression {
-					left_hand_side: Rc::new(res),
-					right_hand_side: Rc::new(right_hand_side),
-				}),
-				"-" => Expression::Subtraction(SubtractionExpression {
-					left_hand_side: Rc::new(res),
-					right_hand_side: Rc::new(right_hand_side),
-				}),
-				_ => panic!("bad summation operator: {operator}"),
-			};
-		}
-
-		res
-	}
-
-	pub fn lazy_boolean_binary(left_hand_side: Expression, tail: Vec<(&str, Expression)>) -> Expression {
-		let mut res = left_hand_side;
-
-		for (operator, right_hand_side) in tail {
-			res = match operator {
-				"||" => Expression::Or(OrExpression {
-					left_hand_side: Rc::new(res),
-					right_hand_side: Rc::new(right_hand_side),
-				}),
-				"&&" => Expression::And(AndExpression {
-					left_hand_side: Rc::new(res),
-					right_hand_side: Rc::new(right_hand_side),
-				}),
-				_ => panic!("bad summation operator: {operator}"),
-			};
-		}
-
-		res
-	}
-
-	pub fn eager_boolean_binary(left_hand_side: Expression, tail: Vec<(&str, Expression)>) -> Expression {
-		let mut res = left_hand_side;
-
-		for (operator, right_hand_side) in tail {
-			res = match operator {
-				"<" => Expression::LessThan(LessThanExpression {
-					left_hand_side: Rc::new(res),
-					right_hand_side: Rc::new(right_hand_side),
-				}),
-				"<=" => Expression::LessThanOrEqualTo(LessThanOrEqualToExpression {
-					left_hand_side: Rc::new(res),
-					right_hand_side: Rc::new(right_hand_side),
-				}),
-				"==" => Expression::EqualTo(EqualToExpression {
-					left_hand_side: Rc::new(res),
-					right_hand_side: Rc::new(right_hand_side),
-				}),
-				"!=" => Expression::NotEqualTo(NotEqualToExpression {
-					left_hand_side: Rc::new(res),
-					right_hand_side: Rc::new(right_hand_side),
-				}),
-				">=" => Expression::GreaterThanOrEqualTo(GreaterThanOrEqualToExpression {
-					left_hand_side: Rc::new(res),
-					right_hand_side: Rc::new(right_hand_side),
-				}),
-				">" => Expression::GreaterThan(GreaterThanExpression {
-					left_hand_side: Rc::new(res),
-					right_hand_side: Rc::new(right_hand_side),
-				}),
-				_ => panic!("bad summation operator: {operator}"),
-			};
+			res = Expression::BinaryOperation(BinaryOperationExpression {
+				operation,
+				left_hand_side: Rc::new(res),
+				right_hand_side: Rc::new(operand),
+			});
 		}
 
 		res
@@ -261,4 +184,27 @@ pub struct IfElseExpression {
 	pub condition: Expr,
 	pub then_branch: Expr,
 	pub else_branch: Expr,
+}
+
+#[derive(Debug, PartialEq)]
+pub struct BinaryOperationExpression {
+	pub operation: BinaryOperator,
+	pub left_hand_side: Expr,
+	pub right_hand_side: Expr,
+}
+
+#[derive(Debug, PartialEq)]
+pub enum BinaryOperator {
+	Addition,
+	Subtraction,
+	Multiplication,
+	Division,
+	Or,
+	And,
+	LessThan,
+	LessThanOrEqualTo,
+	EqualTo,
+	NotEqualTo,
+	GreaterThanOrEqualTo,
+	GreaterThan,
 }

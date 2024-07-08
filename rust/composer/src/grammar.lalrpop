@@ -6,7 +6,7 @@ use crate::ast::*;
 grammar;
 
 pub Expression: Expression = {
-    <l:EagerBooleanBinary> <tail:(LazyBooleanOperator EagerBooleanBinary)*> => Expression::lazy_boolean_binary(l, tail),
+    <l:EagerBooleanBinary> <tail:(LazyBooleanOperator EagerBooleanBinary)*> => Expression::binary_operation(l, tail),
 };
 
 LazyBooleanOperator = {
@@ -24,7 +24,7 @@ EagerBooleanBinaryOperator = {
 };
 
 EagerBooleanBinary: Expression = {
-    <l:EagerBooleanUnary> <tail:(EagerBooleanBinaryOperator EagerBooleanUnary)*> => Expression::eager_boolean_binary(l, tail),
+    <l:EagerBooleanUnary> <tail:(EagerBooleanBinaryOperator EagerBooleanUnary)*> => Expression::binary_operation(l, tail),
 };
 
 EagerBooleanUnary: Expression = {
@@ -37,11 +37,11 @@ ProductOperator = {
 };
 
 Product: Expression = {
-    <l:Factor> <tail:(ProductOperator Factor)*> => Expression::product(l, tail),
+    <l:Factor> <tail:(ProductOperator Factor)*> => Expression::binary_operation(l, tail),
 };
 
 Factor: Expression = {
-    <l:Term> <tail:(SummationOperator Term)*> => Expression::sum(l, tail),
+    <l:Term> <tail:(SummationOperator Term)*> => Expression::binary_operation(l, tail),
 };
 
 SummationOperator = {
