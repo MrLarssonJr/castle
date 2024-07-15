@@ -8,6 +8,7 @@ pub enum Expression {
 	FunctionApplication(FunctionApplicationExpression),
 	FunctionDefinition(FunctionDefinitionExpression),
 	NumberLiteral(NumberLiteralExpression),
+	BooleanLiteral(BooleanLiteralExpression),
 	LetIn(LetInExpression),
 	IfElse(IfElseExpression),
 	UnaryOperation(UnaryOperationExpression),
@@ -65,6 +66,9 @@ impl Expression {
 
 #[derive(Debug, PartialEq)]
 pub struct NumberLiteralExpression(pub isize);
+
+#[derive(Debug, PartialEq)]
+pub struct BooleanLiteralExpression(pub bool);
 
 #[derive(Debug, Hash, Eq, PartialEq, Clone)]
 pub struct Identifier(pub String);

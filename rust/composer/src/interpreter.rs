@@ -7,7 +7,7 @@ mod eval {
 	use thiserror::Error;
 
 	use crate::ast::{
-		BinaryOperationExpression, BinaryOperator, Expression, FunctionApplicationExpression, FunctionDefinitionExpression, Identifier, IdentifierExpression, IfElseExpression, LetInExpression, NumberLiteralExpression, UnaryOperationExpression, UnaryOperator
+		BinaryOperationExpression, BinaryOperator, BooleanLiteralExpression, Expression, FunctionApplicationExpression, FunctionDefinitionExpression, Identifier, IdentifierExpression, IfElseExpression, LetInExpression, NumberLiteralExpression, UnaryOperationExpression, UnaryOperator
 	};
 	use crate::interpreter::value::Value;
 
@@ -20,6 +20,9 @@ mod eval {
 		match ast {
 			Expression::NumberLiteral(number_literal) => {
 				eval_number_literal(bindings, number_literal)
+			},
+			Expression::BooleanLiteral(boolean_literal) => {
+				eval_boolean_literal(bindings, boolean_literal)
 			},
 			Expression::Identifier(identifier) => eval_identifier(bindings, identifier),
 			Expression::FunctionApplication(function_application) => {
@@ -89,6 +92,15 @@ mod eval {
 		let NumberLiteralExpression(val) = number_literal;
 
 		Ok(Value::Number(*val))
+	}
+
+	pub fn eval_boolean_literal(
+		_bindings: &HashMap<Identifier, Value>,
+		boolean_literal: &BooleanLiteralExpression,
+	) -> Result<Value, RuntimeException> {
+		let BooleanLiteralExpression(val) = boolean_literal;
+
+		Ok(Value::Boolean(*val))
 	}
 
 	pub fn eval_identifier(
