@@ -6,32 +6,47 @@ use crate::ast::*;
 grammar;
 
 pub Expression: Expression = {
-    BooleanExpression
+    #[precedence(level="0")]
+    Atom,
+
+    #[precedence(level="1")]
+    "-" <Expression> => Expression::unary(vec!["-"], <>),
+
+    #[precedence(level="2")] #[assoc(side="left")]
+    <l:Expression> "*" <r:Expression> => Expression::binary_operation(l, vec![("*", r)]),
+    <l:Expression> "/" <r:Expression> => Expression::binary_operation(l, vec![("/", r)]),
+
+    #[precedence(level="3")] #[assoc(side="left")]
+    <l:Expression> "+" <r:Expression> => Expression::binary_operation(l, vec![("+", r)]),
+    <l:Expression> "-" <r:Expression> => Expression::binary_operation(l, vec![("-", r)]),
+
+    #[precedence(level="4")] #[assoc(side="left")]
+    <l:Expression> "<" <r:Expression> => Expression::binary_operation(l, vec![("<", r)]),
+    <l:Expression> "<=" <r:Expression> => Expression::binary_operation(l, vec![("<=", r)]),
+    <l:Expression> "==" <r:Expression> => Expression::binary_operation(l, vec![("==", r)]),
+    <l:Expression> "!=" <r:Expression> => Expression::binary_operation(l, vec![("!=", r)]),
+    <l:Expression> ">=" <r:Expression> => Expression::binary_operation(l, vec![(">=", r)]),
+    <l:Expression> ">" <r:Expression> => Expression::binary_operation(l, vec![(">", r)]),
+
+    #[precedence(level="5")]
+    "!" <Expression> => Expression::unary(vec!["!"], <>),
+
+    #[precedence(level="6")] #[assoc(side="left")]
+    <l:Expression> "&&" <r:Expression> => Expression::binary_operation(l, vec![("&&", r)]),
+
+    #[precedence(level="7")] #[assoc(side="left")]
+    <l:Expression> "||" <r:Expression> => Expression::binary_operation(l, vec![("||", r)]),
 };
 
-// ################################
-// BOOLEAN
-// ################################
-
-BooleanExpression: Expression = {
-    Disjunct,
-    <l:Disjunct> <tail:("||" Disjunct)+> => Expression::binary_operation(l, tail),
-};
-
-Disjunct: Expression = {
-    Conjunct,
-    <l:Conjunct> <tail:("&&" Conjunct)+> => Expression::binary_operation(l, tail),
-};
-
-Conjunct: Expression = {
-    Negand,
-    <negations:("!")+> <operand:Negand> => Expression::unary(negations, operand),
-};
-
-Negand: Expression = {
+Atom: Expression = {
+    FunctionApplication,
+    FunctionLiteral,
+    LetIn,
+    IfElse,
+    Identifier => Expression::Identifier(IdentifierExpression(<>)),
+    NumberLiteral,
     BooleanLiteral,
-    ComparisionExpression,
-};
+}
 
 // A literal that produces a number
 BooleanLiteral: Expression = {
@@ -39,61 +54,9 @@ BooleanLiteral: Expression = {
     "false" => Expression::BooleanLiteral(BooleanLiteralExpression(false)),
 };
 
-// ################################
-// Comparision
-// ################################
-
-ComparisionExpression: Expression = {
-    NumberExpression,
-    <l:NumberExpression> "<" <r:NumberExpression> => Expression::binary_operation(l, vec![("<", r)]),
-    <l:NumberExpression> "<=" <r:NumberExpression> => Expression::binary_operation(l, vec![("<=", r)]),
-    <l:NumberExpression> "==" <r:NumberExpression> => Expression::binary_operation(l, vec![("==", r)]),
-    <l:NumberExpression> "!=" <r:NumberExpression> => Expression::binary_operation(l, vec![("!=", r)]),
-    <l:NumberExpression> ">=" <r:NumberExpression> => Expression::binary_operation(l, vec![(">=", r)]),
-    <l:NumberExpression> ">" <r:NumberExpression> => Expression::binary_operation(l, vec![(">", r)]),
-};
-
-// ################################
-// NUMBER
-// ################################
-
-NumberExpression: Expression = {
-    Term,
-    <l:Term> <tail:("+" Term)+> => Expression::binary_operation(l, tail),
-    <l:Term> <tail:("-" Term)+> => Expression::binary_operation(l, tail),
-};
-
-Term: Expression = {
-    Factor,
-    <l:Factor> <tail:("*" Factor)+> => Expression::binary_operation(l, tail),
-    <l:Factor> <tail:("/" Factor)+> => Expression::binary_operation(l, tail),
-};
-
-Factor: Expression = {
-    Operand,
-    <negations:("-")+> <operand:Operand> => Expression::unary(negations, operand)
-};
-
-Operand: Expression = {
-    BaseAtom,
-    NumberLiteral,
-};
-
 // A literal that produces a number
 NumberLiteral: Expression = r"[0-9]+" => Expression::NumberLiteral(NumberLiteralExpression(isize::from_str(<>).unwrap()));
 
-
-// ################################
-// OTHER
-// ################################
-
-BaseAtom: Expression = {
-    FunctionApplication,
-    FunctionLiteral,
-    LetIn,
-    IfElse,
-    Identifier => Expression::Identifier(IdentifierExpression(<>)),
-};
 
 // A literal that produces a function
 FunctionLiteral: Expression = "fn" "(" <parameters:Comma<Identifier>?> ")" "{" <body:Expression> "}" => match parameters {
@@ -110,7 +73,7 @@ FunctionLiteral: Expression = "fn" "(" <parameters:Comma<Identifier>?> ")" "{" <
     }),
 };
 
-IfElse: Expression = "if" <condition:BooleanExpression> "{" <then_branch:Expression> "}" "else" "{" <else_branch:Expression> "}" => Expression::IfElse(IfElseExpression {
+IfElse: Expression = "if" <condition:Expression> "{" <then_branch:Expression> "}" "else" "{" <else_branch:Expression> "}" => Expression::IfElse(IfElseExpression {
     condition: Rc::new(condition),
     then_branch: Rc::new(then_branch),
     else_branch: Rc::new(else_branch),
@@ -118,7 +81,7 @@ IfElse: Expression = "if" <condition:BooleanExpression> "{" <then_branch:Express
 
 LetIn: Expression = "let" <binding:Identifier> "=" <value:Expression> "in" <body:Expression> ";" => Expression::LetIn(LetInExpression { binding, value: Rc::new(value), body: Rc::new(body) });
 
-FunctionApplication: Expression = <function:BaseAtom> "(" <arguments:Comma<Expression>?> ")" => Expression::FunctionApplication(FunctionApplicationExpression {
+FunctionApplication: Expression = <function:Atom> "(" <arguments:Comma<Expression>?> ")" => Expression::FunctionApplication(FunctionApplicationExpression {
     function: Rc::new(function),
     arguments: arguments.unwrap_or_else(|| Vec::new()),
 });
