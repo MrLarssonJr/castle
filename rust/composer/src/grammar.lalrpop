@@ -48,7 +48,7 @@ Atom: Expression = {
     BooleanLiteral,
 }
 
-// A literal that produces a number
+// A literal that produces a boolean
 BooleanLiteral: Expression = {
     "true" => Expression::BooleanLiteral(BooleanLiteralExpression(true)),
     "false" => Expression::BooleanLiteral(BooleanLiteralExpression(false)),
