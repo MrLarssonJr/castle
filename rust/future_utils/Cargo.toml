@@ -1,0 +1,11 @@
+[package]
+name = "future_utils"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+tokio-util = "0.7.12"
+tokio = { version = "1.40.0", features = ["test-util", "macros"] }
+
+[dev-dependencies]
+tokio-test = "0.4.4"

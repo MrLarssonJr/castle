@@ -4,7 +4,7 @@ use crate::model::User;
 use crate::nordigen_token_client::NordigenTokenClient;
 use crate::token_manager::TokenManager;
 use ::config::FromConfig;
-use ::error::ResultExt;
+use error::extensions::result::ResultExt;
 use mongodb::Client;
 use std::time::Duration;
 use tracing::info;

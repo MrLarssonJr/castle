@@ -1,0 +1,23 @@
+[package]
+name = "lemonade_api"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+thiserror = "1.0.64"
+chrono = "0.4.38"
+url = "2.5.2"
+reqwest = "0.12.7"
+tokio = { version = "1.40.0", features = ["macros", "rt-multi-thread"] }
+axum = { version = "0.7.6", features = ["macros"] }
+axum-extra = { version = "0.9.4", features = ["json-deserializer"] }
+serde = { version = "1.0.210", features = ["derive", "rc"] }
+error = { path = "../error" }
+itertools = "0.13.0"
+rand = "0.8.5"
+tracing-subscriber = "0.3.18"
+tracing = "0.1.40"
+anyhow = "1.0.89"
+either = "1.13.0"
+futures = "0.3.30"
+base64 = "0.22.1"
