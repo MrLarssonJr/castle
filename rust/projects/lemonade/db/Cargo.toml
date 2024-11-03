@@ -1,0 +1,15 @@
+[package]
+name = "lemonade_db"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+uuid = { version = "1.11.0", features = ["serde", "v7"] }
+futures = "0.3.31"
+chrono = "0.4.38"
+tracing = "0.1.40"
+tokio = "1.41.0"
+sqlx = { version = "0.8.2", features = ["postgres", "uuid", "runtime-tokio", "chrono"] }
+snafu = "0.8.5"
+orion = "0.17.7"
+lemonade_model = { path = "../model" }

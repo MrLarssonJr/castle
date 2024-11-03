@@ -1,0 +1,11 @@
+[package]
+name = "lemonade_nordigen"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+reqwest = { version = "0.12.9", features = ["json"] }
+serde = { version = "1.0.214", features = ["derive", "rc"] }
+chrono = "0.4.38"
+snafu = "0.8.5"
+lemonade_model = { path = "../model" }

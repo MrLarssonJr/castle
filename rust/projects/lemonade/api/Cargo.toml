@@ -1,0 +1,16 @@
+[package]
+name = "lemonade_api"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+serde = { version = "1.0.214", features = ["derive"] }
+uuid = { version = "1.11.0", features = ["v4"] }
+tracing = "0.1.40"
+async-trait = "0.1.83"
+sqlx = { version = "0.8.2", features = ["postgres"] }
+axum = "0.7.7"
+lemonade_model = { path = "../model" }
+lemonade_db = { path = "../db" }
+snafu = "0.8.5"
+orion = "0.17.7"
