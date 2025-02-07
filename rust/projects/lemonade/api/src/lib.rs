@@ -3,17 +3,16 @@ use axum::extract::FromRequestParts;
 use axum::http::request::Parts;
 use axum::http::StatusCode;
 use axum::response::{IntoResponse, Response};
+use lemonade_db::{Connection, Database};
 use lemonade_model::{BasicCredential, SessionToken};
 use serde::{Deserialize, Serialize};
 use snafu::{Report, ResultExt, Whatever};
-use sqlx::error::ErrorKind;
-use sqlx::PgPool;
 use std::str::FromStr;
 use uuid::Uuid;
 
 #[derive(Debug, Clone)]
 pub struct AppState {
-	pub db: PgPool,
+	pub db: Database,
 }
 
 #[derive(Debug, Serialize)]
@@ -38,7 +37,6 @@ impl Default for PageQueryOptions {
 }
 
 enum ApiError {
-	NotFound,
 	InternalServerError,
 	BadRequest,
 	Unauthenticated,
@@ -48,30 +46,11 @@ enum ApiError {
 impl IntoResponse for ApiError {
 	fn into_response(self) -> Response {
 		match self {
-			ApiError::NotFound => StatusCode::NOT_FOUND.into_response(),
 			ApiError::InternalServerError => StatusCode::INTERNAL_SERVER_ERROR.into_response(),
 			ApiError::BadRequest => StatusCode::BAD_REQUEST.into_response(),
 			ApiError::Unauthenticated => StatusCode::UNAUTHORIZED.into_response(),
 			ApiError::Unauthorized => StatusCode::FORBIDDEN.into_response(),
 		}
-	}
-}
-
-impl From<sqlx::Error> for ApiError {
-	fn from(value: sqlx::Error) -> Self {
-		let res = match &value {
-			sqlx::Error::RowNotFound => ApiError::NotFound,
-			sqlx::Error::Database(db_err) => match db_err.kind() {
-				ErrorKind::Other => ApiError::InternalServerError,
-				_ => ApiError::BadRequest,
-			},
-			_ => ApiError::InternalServerError,
-		};
-
-		let report = snafu::Report::from_error(value);
-		tracing::warn!("{report}");
-
-		res
 	}
 }
 
@@ -88,13 +67,17 @@ struct Authentication {
 }
 
 impl Authentication {
-	async fn from_basic(db: &PgPool, value: &str) -> Result<Authentication, ApiError> {
+	async fn from_basic(
+		conn: &mut Connection<'_>,
+		value: &str,
+	) -> Result<Authentication, ApiError> {
 		let creds =
 			BasicCredential::from_str(value).with_whatever_context::<_, _, Whatever>(|_| {
 				format!("could not build authentication from basic creds, got bad creds {value}")
 			})?;
 
-		let Some(user_id) = lemonade_db::users::authenticate(db, &creds)
+		let Some(user_id) = conn
+			.authenticate_basic_credential(&creds)
 			.await
 			.with_whatever_context::<_, _, Whatever>(|_| {
 				"could not build authentication from basic creds, failed to authenticate"
@@ -107,13 +90,14 @@ impl Authentication {
 	}
 
 	async fn from_session(
-		db: &PgPool,
+		conn: &mut Connection<'_>,
 		session_token: &str,
 	) -> Result<Option<Authentication>, Whatever> {
 		let session_token = SessionToken::from_str(session_token)
 			.with_whatever_context(|_| "failed to parse session_token")?;
 
-		let Some(user_id) = lemonade_db::sessions::authenticate(db, session_token)
+		let Some(user_id) = conn
+			.authenticate_session(session_token)
 			.await
 			.with_whatever_context(|_| "failed to authenticate session")?
 		else {
@@ -145,12 +129,14 @@ impl FromRequestParts<AppState> for Authentication {
 			ApiError::BadRequest
 		})?;
 
+		let mut conn = state.db.conn().await?;
+
 		if let Some(value) = auth_header.strip_prefix("Basic ") {
-			return Ok(Authentication::from_basic(&state.db, value).await?);
+			return Ok(Authentication::from_basic(&mut conn, value).await?);
 		}
 
 		if let Some(value) = auth_header.strip_prefix("Session ") {
-			let Some(authentication) = Authentication::from_session(&state.db, value).await? else {
+			let Some(authentication) = Authentication::from_session(&mut conn, value).await? else {
 				return Err(ApiError::Unauthenticated);
 			};
 			return Ok(authentication);

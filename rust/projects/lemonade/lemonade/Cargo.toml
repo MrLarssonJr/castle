@@ -11,7 +11,7 @@ tracing = "0.1.40"
 lemonade_nordigen = { path = "../nordigen" }
 snafu = "0.8.5"
 axum = "0.7.7"
-sqlx = { version = "0.8.2", features = ["postgres"] }
 lemonade_api = { path = "../api" }
 lemonade_model = { path = "../model" }
 lemonade_db = { path = "../db" }
+futures = "0.3.31"

@@ -37,9 +37,9 @@ async fn create_user(
 	Authentication { user_id }: Authentication,
 	Json(CreateUserDto { username, password }): Json<CreateUserDto>,
 ) -> Result<Json<UserDto>, ApiError> {
-	let db = app_state.db;
+	let mut conn = app_state.db.conn().await?;
 
-	let is_admin = lemonade_db::roles::has_role(&db, user_id, Role::Admin).await?;
+	let is_admin = conn.has_role(user_id, Role::Admin).await?;
 
 	if !is_admin {
 		return Err(ApiError::Unauthorized);
@@ -54,8 +54,7 @@ async fn create_user(
 			"unable to create user, due to unable to hash password"
 		})?;
 
-	let User { id, username } =
-		lemonade_db::users::create_user(&db, &username, password_hash).await?;
+	let User { id, username } = conn.create_user(&username, password_hash).await?;
 
 	Ok(Json(UserDto { id, username }))
 }
@@ -65,15 +64,16 @@ async fn get_users(
 	Authentication { user_id }: Authentication,
 	Query(PageQueryOptions { limit, offset }): Query<PageQueryOptions>,
 ) -> Result<Json<PageDto<UserDto>>, ApiError> {
-	let db = app_state.db;
+	let mut conn = app_state.db.conn().await?;
 
-	let is_admin = lemonade_db::roles::has_role(&db, user_id, Role::Admin).await?;
+	let is_admin = conn.has_role(user_id, Role::Admin).await?;
 
 	if !is_admin {
 		return Err(ApiError::Unauthorized);
 	}
 
-	let users = lemonade_db::users::get_users(&db, limit, offset)
+	let users = conn
+		.get_users(limit, offset)
 		.await?
 		.into_iter()
 		.map(|User { id, username }| UserDto { id, username })
@@ -89,16 +89,16 @@ async fn get_user(
 	Authentication { user_id }: Authentication,
 	Path(id): Path<Uuid>,
 ) -> Result<Json<UserDto>, ApiError> {
-	let db = app_state.db;
+	let mut conn = app_state.db.conn().await?;
 
-	let is_admin = lemonade_db::roles::has_role(&db, user_id, Role::Admin).await?;
+	let is_admin = conn.has_role(user_id, Role::Admin).await?;
 	let is_own_user = user_id == id;
 
 	if !(is_own_user || is_admin) {
 		return Err(ApiError::Unauthorized);
 	}
 
-	let User { id, username } = lemonade_db::users::get_user(&db, id).await?;
+	let User { id, username } = conn.get_user(id).await?;
 
 	Ok(Json(UserDto { id, username }))
 }
@@ -108,16 +108,16 @@ async fn delete_user(
 	Authentication { user_id }: Authentication,
 	Path(id): Path<Uuid>,
 ) -> Result<Json<UserDto>, ApiError> {
-	let db = app_state.db;
+	let mut conn = app_state.db.conn().await?;
 
-	let is_admin = lemonade_db::roles::has_role(&db, user_id, Role::Admin).await?;
+	let is_admin = conn.has_role(user_id, Role::Admin).await?;
 	let is_own_user = user_id == id;
 
 	if !(is_own_user || is_admin) {
 		return Err(ApiError::Unauthorized);
 	}
 
-	let User { id, username } = lemonade_db::users::delete_user(&db, id).await?;
+	let User { id, username } = conn.delete_user(id).await?;
 
 	Ok(Json(UserDto { id, username }))
 }
@@ -128,17 +128,16 @@ async fn update_user(
 	Path(id): Path<Uuid>,
 	Json(UpdateUserDto { username }): Json<UpdateUserDto>,
 ) -> Result<Json<UserDto>, ApiError> {
-	let db = app_state.db;
+	let mut conn = app_state.db.conn().await?;
 
-	let is_admin = lemonade_db::roles::has_role(&db, user_id, Role::Admin).await?;
+	let is_admin = conn.has_role(user_id, Role::Admin).await?;
 	let is_own_user = user_id == id;
 
 	if !(is_own_user || is_admin) {
 		return Err(ApiError::Unauthorized);
 	}
 
-	let User { id, username } =
-		lemonade_db::users::update_user(&db, id, username.as_deref()).await?;
+	let User { id, username } = conn.update_user(id, username.as_deref()).await?;
 
 	Ok(Json(UserDto { id, username }))
 }

@@ -27,10 +27,10 @@ async fn create_session(
 	State(app_state): State<AppState>,
 	Authentication { user_id }: Authentication,
 ) -> Result<Json<CreateSessionDto>, ApiError> {
-	let db = app_state.db;
+	let mut conn = app_state.db.conn().await?;
 
 	let session_token = SessionToken::new(Uuid::now_v7())?;
-	let session_id = lemonade_db::sessions::create_session(&db, user_id, &session_token).await?;
+	let session_id = conn.create_session(user_id, &session_token).await?;
 
 	Ok(Json(CreateSessionDto {
 		id: session_id,
@@ -43,8 +43,8 @@ async fn get_sessions(
 	Authentication { user_id }: Authentication,
 	Query(PageQueryOptions { limit, offset }): Query<PageQueryOptions>,
 ) -> Result<Json<PageDto<SessionDto>>, ApiError> {
-	let db = app_state.db;
-	let sessions = lemonade_db::sessions::get_sessions(&db, user_id, limit, offset).await?;
+	let mut conn = app_state.db.conn().await?;
+	let sessions = conn.get_sessions(user_id, limit, offset).await?;
 	let sessions = sessions.into_iter().map(|id| SessionDto { id }).collect();
 	let page = PageDto { items: sessions };
 	Ok(Json(page))
@@ -55,7 +55,7 @@ async fn delete_session(
 	Authentication { user_id }: Authentication,
 	Path(session_id): Path<Uuid>,
 ) -> Result<Json<SessionDto>, ApiError> {
-	let db = app_state.db;
-	let id = lemonade_db::sessions::delete_session(&db, session_id, user_id).await?;
+	let mut conn = app_state.db.conn().await?;
+	let id = conn.delete_session(session_id, user_id).await?;
 	Ok(Json(SessionDto { id }))
 }
